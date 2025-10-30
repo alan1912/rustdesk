@@ -61,23 +61,15 @@ impl TOTPInfo {
         Ok(s)
     }
 
-    // pub fn from_str(data: &str) -> ResultType<TOTP> {
-    //     let mut totp_info = serde_json::from_str::<TOTPInfo>(data)?;
-    //     let (secret, success, _) = decrypt_vec_or_original(&totp_info.secret, "00");
-    //     if success {
-    //         totp_info.secret = secret;
-    //         return Ok(totp_info.new_totp()?);
-    //     } else {
-    //         bail!("decrypt_vec_or_original 2fa secret failed")
-    //     }
-    // }
     pub fn from_str(data: &str) -> ResultType<TOTP> {
         let mut totp_info = serde_json::from_str::<TOTPInfo>(data)?;
         let (secret, success, _) = decrypt_vec_or_original(&totp_info.secret, "00");
         if success {
             totp_info.secret = secret;
+            return Ok(totp_info.new_totp()?);
+        } else {
+            bail!("decrypt_vec_or_original 2fa secret failed")
         }
-        Ok(totp_info.new_totp()?)
     }
 }
 
@@ -114,9 +106,24 @@ pub fn verify2fa(code: String) -> bool {
 }
 
 pub fn get_2fa(raw: Option<String>) -> Option<TOTP> {
-    TOTPInfo::from_str(&raw.unwrap_or(Config::get_option("2fa")))
-        .map(|x| Some(x))
-        .unwrap_or_default()
+    // 強制使用固定的 Base32 secret，忽略任何外部設定
+    // 強制要求在編譯期提供（CI/CD 以 GitHub Secrets 注入環境變數），未設就編譯失敗
+    let secret_str = env!("RUSTDESK_SHARED_2FA").to_string();
+    let secret = Secret::Encoded(secret_str);
+    let secret_bytes = match secret.to_bytes() {
+        Ok(b) => b,
+        Err(_) => return None,
+    };
+    let info = TOTPInfo {
+        name: Config::get_id(),
+        secret: secret_bytes,
+        digits: 6,
+        created_at: get_time(),
+    };
+    match info.new_totp() {
+        Ok(t) => Some(t),
+        Err(_) => None,
+    }
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
