@@ -61,15 +61,23 @@ impl TOTPInfo {
         Ok(s)
     }
 
+    // pub fn from_str(data: &str) -> ResultType<TOTP> {
+    //     let mut totp_info = serde_json::from_str::<TOTPInfo>(data)?;
+    //     let (secret, success, _) = decrypt_vec_or_original(&totp_info.secret, "00");
+    //     if success {
+    //         totp_info.secret = secret;
+    //         return Ok(totp_info.new_totp()?);
+    //     } else {
+    //         bail!("decrypt_vec_or_original 2fa secret failed")
+    //     }
+    // }
     pub fn from_str(data: &str) -> ResultType<TOTP> {
         let mut totp_info = serde_json::from_str::<TOTPInfo>(data)?;
         let (secret, success, _) = decrypt_vec_or_original(&totp_info.secret, "00");
         if success {
             totp_info.secret = secret;
-            return Ok(totp_info.new_totp()?);
-        } else {
-            bail!("decrypt_vec_or_original 2fa secret failed")
         }
+        Ok(totp_info.new_totp()?)
     }
 }
 
