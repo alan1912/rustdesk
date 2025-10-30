@@ -819,6 +819,11 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
 
   Widget tfa() {
     bool enabled = !locked;
+    // 🔒 強制鎖定 2FA 和相關選項
+    bool tfa2faLocked = true;  // 強制鎖定 2FA，不能關閉
+    bool tfaBotLocked = true;  // 強制鎖定 Telegram bot，不能設定
+    bool tfaTrustLocked = true; // 強制鎖定信任裝置，不能更改
+
     // Simple temp wrapper for PR check
     tmpWrapper() {
       RxBool has2fa = bind.mainHasValid2FaSync().obs;
@@ -845,18 +850,18 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
                 children: [
                   Checkbox(
                           value: has2fa.value,
-                          onChanged: enabled ? onChanged : null)
+                          onChanged: (enabled && !tfa2faLocked) ? onChanged : null)
                       .marginOnly(right: 5),
                   Expanded(
                       child: Text(
                     translate('enable-2fa-title'),
                     style:
-                        TextStyle(color: disabledTextColor(context, enabled)),
+                        TextStyle(color: disabledTextColor(context, enabled && !tfa2faLocked)),
                   ))
                 ],
               )),
         ),
-        onTap: () {
+        onTap: tfa2faLocked ? null : () {
           onChanged(!has2fa.value);
         },
       ).marginOnly(left: _kCheckBoxLeftMargin);
@@ -888,18 +893,18 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
                     children: [
                       Checkbox(
                               value: hasBot.value,
-                              onChanged: enabled ? onChangedBot : null)
+                              onChanged: (enabled && !tfaBotLocked) ? onChangedBot : null)
                           .marginOnly(right: 5),
                       Expanded(
                           child: Text(
                         translate('Telegram bot'),
                         style: TextStyle(
-                            color: disabledTextColor(context, enabled)),
+                            color: disabledTextColor(context, enabled && !tfaBotLocked)),
                       ))
                     ],
                   ))),
         ),
-        onTap: () {
+        onTap: tfaBotLocked ? null : () {
           onChangedBot(!hasBot.value);
         },
       ).marginOnly(left: _kCheckBoxLeftMargin + 30);
@@ -912,14 +917,14 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
               message: translate("enable-trusted-devices-tip"),
               child: _OptionCheckBox(context, "Enable trusted devices",
                   kOptionEnableTrustedDevices,
-                  enabled: !locked, update: (v) {
+                  enabled: !locked && !tfaTrustLocked, update: (v) {
                 setState(() {});
               }),
             ),
           ),
           if (mainGetBoolOptionSync(kOptionEnableTrustedDevices))
             ElevatedButton(
-                onPressed: locked
+                onPressed: (locked || tfaTrustLocked)
                     ? null
                     : () {
                         manageTrustedDeviceDialog();
@@ -1038,6 +1043,9 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
   }
 
   Widget password(BuildContext context) {
+    // 🔒 強制鎖定密碼相關選項
+    bool passwordLocked = true;  // 鎖定所有密碼選項
+    
     return ChangeNotifierProvider.value(
         value: gFFI.serverModel,
         child: Consumer<ServerModel>(builder: ((context, model, child) {
@@ -1061,7 +1069,7 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
                     value: value,
                     groupValue: currentValue,
                     label: value,
-                    onChanged: locked
+                    onChanged: (locked || passwordLocked)
                         ? null
                         : ((value) async {
                             callback() async {
@@ -1083,7 +1091,7 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
                   ))
               .toList();
 
-          var onChanged = tmpEnabled && !locked
+          var onChanged = tmpEnabled && !locked && !passwordLocked
               ? (value) {
                   if (value != null) {
                     () async {
@@ -1115,7 +1123,7 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
 
           final isOptFixedNumOTP =
               isOptionFixed(kOptionAllowNumericOneTimePassword);
-          final isNumOPTChangable = !isOptFixedNumOTP && tmpEnabled && !locked;
+          final isNumOPTChangable = !isOptFixedNumOTP && tmpEnabled && !locked && !passwordLocked;
           final numericOneTimePassword = GestureDetector(
             child: InkWell(
                 child: Row(
@@ -1160,7 +1168,7 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
           final isApproveModeFixed = isOptionFixed(kOptionApproveMode);
           return _Card(title: 'Password', children: [
             ComboBox(
-              enabled: !locked && !isApproveModeFixed,
+              enabled: !locked && !isApproveModeFixed && !passwordLocked,
               keys: modeKeys,
               values: modeValues,
               initialKey: modeInitialKey,
@@ -1176,12 +1184,12 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
                       ...lengthRadios,
                     ],
                   ),
-                  enabled: tmpEnabled && !locked),
+                  enabled: tmpEnabled && !locked && !passwordLocked),
             numericOneTimePassword,
             if (usePassword) radios[1],
             if (usePassword)
               _SubButton('Set permanent password', setPasswordDialog,
-                  permEnabled && !locked),
+                  permEnabled && !locked && !passwordLocked),
             // if (usePassword)
             //   hide_cm(!locked).marginOnly(left: _kContentHSubMargin - 6),
             if (usePassword) radios[2],
