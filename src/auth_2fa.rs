@@ -78,19 +78,7 @@ pub fn generate2fa() -> String {
     let id = crate::ipc::get_id();
     #[cfg(any(target_os = "android", target_os = "ios"))]
     let id = Config::get_id();
-
-    // 🔒 使用固定的 Base32 secret
-    use totp_rs::Secret;
-    let secret_str = "JNBHG5DZOB3WC3DPMU2GS3LENBVGY3DGMZXGYLTMNZWK3DFNBVGY3DLM4";
-    let secret = Secret::Encoded(secret_str.to_string());
-
-    if let Ok(secret_bytes) = secret.to_bytes() {
-        let info = TOTPInfo {
-            name: id.clone(),
-            secret: secret_bytes,
-            digits: 6,
-            created_at: get_time(),
-        };
+    if let Ok(info) = TOTPInfo::gen_totp_info(id, 6) {
         if let Ok(totp) = info.new_totp() {
             let code = totp.get_url();
             *CURRENT_2FA.lock().unwrap() = Some((info, totp));
@@ -215,32 +203,32 @@ pub fn get_chatid_telegram(bot_token: &str) -> ResultType<Option<String>> {
     Ok(chat_id)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
     
-    #[test]
-    fn generate_fixed_encrypted_2fa() {
-        use totp_rs::Secret;
+//     #[test]
+//     fn generate_fixed_encrypted_2fa() {
+//         use totp_rs::Secret;
         
-        // 固定的 Base32 secret
-        let secret_str = "JNBHG5DZOB3WC3DPMU2GS3LENBVGY3DGMZXGYLTMNZWK3DFNBVGY3DLM4";
-        let secret = Secret::Encoded(secret_str.to_string());
+//         // 固定的 Base32 secret
+//         let secret_str = "JNBHG5DZOB3WC3DPMU2GS3LENBVGY3DGMZXGYLTMNZWK3DFNBVGY3DLM4";
+//         let secret = Secret::Encoded(secret_str.to_string());
         
-        let totp_info = TOTPInfo {
-            name: "RUSTDESK-FIXED".to_string(),
-            secret: secret.to_bytes().unwrap(),
-            digits: 6,
-            created_at: 1700000000,
-        };
+//         let totp_info = TOTPInfo {
+//             name: "RUSTDESK-FIXED".to_string(),
+//             secret: secret.to_bytes().unwrap(),
+//             digits: 6,
+//             created_at: 1700000000,
+//         };
         
-        // 生成加密後的配置
-        let encrypted_config = totp_info.into_string().unwrap();
+//         // 生成加密後的配置
+//         let encrypted_config = totp_info.into_string().unwrap();
         
-        println!("\n========================================");
-        println!("將以下字串複製到 OVERWRITE_SETTINGS 中：");
-        println!("========================================");
-        println!("{}", encrypted_config);
-        println!("========================================\n");
-    }
-}
+//         println!("\n========================================");
+//         println!("將以下字串複製到 OVERWRITE_SETTINGS 中：");
+//         println!("========================================");
+//         println!("{}", encrypted_config);
+//         println!("========================================\n");
+//     }
+// }
