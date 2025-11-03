@@ -36,6 +36,7 @@ env:
   RUSTDESK_ID_SERVER: ${{ secrets.RUSTDESK_ID_SERVER }}
   RUSTDESK_RELAY_SERVER: ${{ secrets.RUSTDESK_RELAY_SERVER }}
   RUSTDESK_KEY: ${{ secrets.RUSTDESK_KEY }}
+  RUSTDESK_APP_NAME: ${{ secrets.RUSTDESK_APP_NAME }}
   # vcpkg version: 2025.08.27
   # If we change the `VCPKG COMMIT_ID`, please remember:
   # 1. Call `$VCPKG_ROOT/vcpkg x-update-baseline` to update the baseline in `vcpkg.json`.
