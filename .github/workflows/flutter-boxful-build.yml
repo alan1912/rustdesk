@@ -33,6 +33,9 @@ env:
   VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
   # 使用 GitHub Secret
   RUSTDESK_SHARED_2FA: ${{ secrets.RUSTDESK_SHARED_2FA }}
+  RUSTDESK_ID_SERVER: ${{ secrets.RUSTDESK_ID_SERVER }}
+  RUSTDESK_RELAY_SERVER: ${{ secrets.RUSTDESK_RELAY_SERVER }}
+  RUSTDESK_KEY: ${{ secrets.RUSTDESK_KEY }}
   # vcpkg version: 2025.08.27
   # If we change the `VCPKG COMMIT_ID`, please remember:
   # 1. Call `$VCPKG_ROOT/vcpkg x-update-baseline` to update the baseline in `vcpkg.json`.
