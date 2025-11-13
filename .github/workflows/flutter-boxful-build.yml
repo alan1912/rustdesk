@@ -165,6 +165,13 @@ jobs:
           head -n 100 "${VCPKG_ROOT}/buildtrees/ffmpeg/build-${{ matrix.job.vcpkg-triplet }}-rel-out.log" || true
         shell: bash
 
+      - name: Downgrade extended_text for Flutter 3.24.5 compatibility
+        shell: bash
+        run: |
+          # extended_text 15.0.2 requires Dart SDK >=3.7.0, but Flutter 3.24.5 uses Dart 3.4.4
+          # Downgrade to 14.0.0 which supports Dart 3.4.4
+          sed -i -e 's/extended_text: \^15\.0\.2/extended_text: ^14.0.0/g' flutter/pubspec.yaml
+
       - name: Build rustdesk
         run: |
           # Windows: build RustDesk
@@ -431,6 +438,12 @@ jobs:
           rustup default
           cargo -V
           rustc -V
+
+      - name: Downgrade extended_text for Flutter 3.24.5 compatibility
+        run: |
+          # extended_text 15.0.2 requires Dart SDK >=3.7.0, but Flutter 3.24.5 uses Dart 3.4.4
+          # Downgrade to 14.0.0 which supports Dart 3.4.4
+          sed -i -e 's/extended_text: \^15\.0\.2/extended_text: ^14.0.0/g' flutter/pubspec.yaml
 
       - name: Build rustdesk
         run: |
