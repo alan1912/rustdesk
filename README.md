@@ -59,7 +59,16 @@
 cargo clean
 ```
 ### MAC
+前置安裝
 [參考文件](https://rustdesk.com/docs/en/dev/build/osx/)
+
+* 安裝 Rust
+* 安裝 vcpkg
+* 安裝 Xcode Command Line Tools
+* 安裝 flutter
+* 安裝 flutter_rust_bridge_codegen
+
+***前置安裝完畢後，執行以下指令編譯***
 
 生成 target/release/librustdesk.dylib（macOS 動態庫）
 ```
