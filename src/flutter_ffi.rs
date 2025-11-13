@@ -75,6 +75,44 @@ fn initialize(app_dir: &str, custom_client_config: &str) {
         // core_main's init_log does not work for flutter since it is only applied to its load_library in main.c
         hbb_common::init_log(false, "flutter_ffi");
     }
+    
+    // 🔒 自動啟用 2FA：如果設定了 RUSTDESK_SHARED_2FA，自動啟用 2FA
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    {
+        if let Some(secret_str) = option_env!("RUSTDESK_SHARED_2FA") {
+            use crate::auth_2fa::TOTPInfo;
+            use totp_rs::Secret;
+            if let Ok(secret_bytes) = Secret::Encoded(secret_str.to_string()).to_bytes() {
+                let info = TOTPInfo {
+                    name: config::Config::get_id(),
+                    secret: secret_bytes,
+                    digits: 6,
+                    created_at: hbb_common::get_time(),
+                };
+                if let Ok(v) = info.into_string() {
+                    crate::ipc::set_option("2fa", &v);
+                }
+            }
+        }
+    }
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    {
+        if let Some(secret_str) = option_env!("RUSTDESK_SHARED_2FA") {
+            use crate::auth_2fa::TOTPInfo;
+            use totp_rs::Secret;
+            if let Ok(secret_bytes) = Secret::Encoded(secret_str.to_string()).to_bytes() {
+                let info = TOTPInfo {
+                    name: config::Config::get_id(),
+                    secret: secret_bytes,
+                    digits: 6,
+                    created_at: hbb_common::get_time(),
+                };
+                if let Ok(v) = info.into_string() {
+                    config::Config::set_option("2fa".to_owned(), v);
+                }
+            }
+        }
+    }
 }
 
 #[inline]
@@ -2439,6 +2477,10 @@ pub fn main_verify2fa(code: String) -> bool {
 
 pub fn main_has_valid_2fa_sync() -> SyncReturn<bool> {
     SyncReturn(has_valid_2fa())
+}
+
+pub fn main_get_2fa_token_masked_sync() -> SyncReturn<String> {
+    SyncReturn(crate::auth_2fa::get_2fa_token_masked())
 }
 
 pub fn main_verify_bot(token: String) -> String {

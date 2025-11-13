@@ -53,20 +53,45 @@
 此檔案為 GitHub Actions 的 CI 設定檔，主要用於自動化建置 RustDesk 桌面版的 Windows 與 macOS 平台安裝檔。  
 內容結構以 `.github/workflows/flutter-build.yml` 為基礎，但僅保留 Windows 和 macOS 相關的 build 流程，移除其他（如 Linux、Android 等）平台，快速獨立出單純只需部署指定桌面平台的建置腳本。
 
-## 本地編譯
+## 編譯
+清除快取
+```
+cargo clean
+```
 ### MAC
-```shell
-cd rustdesk
-cargo build --release
+[參考文件](https://rustdesk.com/docs/en/dev/build/osx/)
 
-# 建置出來的要執行以下指令才可以在 mac 開啟
-# 移除 RustDesk.app 的隔離屬性
-sudo xattr -d com.apple.quarantine /Applications/RustDesk.app
+生成 target/release/librustdesk.dylib（macOS 動態庫）
+```
+# 沒有 2fa 情境
+cargo build --features flutter --lib --release
 
-# 重新簽名應用程式
-codesign --force --deep --sign - /Applications/RustDesk.app
-spctl -a -v /Applications/RustDesk.app
+# 有 2fa 情境
+RUSTDESK_SHARED_2FA='your_2fa_token' cargo build --features flutter --lib --release
+```
 
+建構 Flutter 版本應用程式
+```
+# 沒有 2fa 情境
+python3 ./build.py --flutter
+
+# 有 2fa 情境
+RUSTDESK_SHARED_2FA='your_2fa_token' python3 ./build.py --flutter
+```
+
+建構完成檔案會出現在專案目錄下 `flutter/build/macos/Build/Products/Release/RustDesk.app`
+
+***建置出來的要執行以下指令才可以在 mac 開啟***
+
+重新簽名應用程式
+```
+codesign --force --deep --sign - flutter/build/macos/Build/Products/Release/RustDesk.app
+```
+
+開啟應用程式
+```
+open flutter/build/macos/Build/Products/Release/RustDesk.app
 ```
 
 ### Windows
+[參考文件](https://rustdesk.com/docs/en/dev/build/windows/)

@@ -197,7 +197,7 @@ void showServerSettingsWithValue(
 
     Widget buildField(
         String label, TextEditingController controller, String errorMsg,
-        {String? Function(String?)? validator, bool autofocus = false, bool enabled = true}) {
+        {String? Function(String?)? validator, bool autofocus = false}) {
       if (isDesktop || isWeb) {
         return Row(
           children: [
@@ -209,7 +209,6 @@ void showServerSettingsWithValue(
             Expanded(
               child: TextFormField(
                 controller: controller,
-                enabled: enabled,
                 decoration: InputDecoration(
                   errorText: errorMsg.isEmpty ? null : errorMsg,
                   contentPadding:
@@ -225,7 +224,6 @@ void showServerSettingsWithValue(
 
       return TextFormField(
         controller: controller,
-        enabled: enabled,
         decoration: InputDecoration(
           labelText: label,
           errorText: errorMsg.isEmpty ? null : errorMsg,
@@ -247,19 +245,12 @@ void showServerSettingsWithValue(
           child: Obx(() => Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  buildField(
-                      translate('ID Server'),
-                      idCtrl,
-                      idServerMsg.value,
-                      autofocus: true,
-                      enabled: !isOptionFixed('custom-rendezvous-server')),
+                  buildField(translate('ID Server'), idCtrl, idServerMsg.value,
+                      autofocus: true),
                   SizedBox(height: 8),
                   if (!isIOS && !isWeb) ...[
-                    buildField(
-                        translate('Relay Server'),
-                        relayCtrl,
-                        relayServerMsg.value,
-                        enabled: !isOptionFixed('relay-server')),
+                    buildField(translate('Relay Server'), relayCtrl,
+                        relayServerMsg.value),
                     SizedBox(height: 8),
                   ],
                   buildField(
@@ -277,8 +268,7 @@ void showServerSettingsWithValue(
                     },
                   ),
                   SizedBox(height: 8),
-                  buildField('Key', keyCtrl, '',
-                      enabled: !isOptionFixed('key')),
+                  buildField('Key', keyCtrl, ''),
                   if (isInProgress)
                     Padding(
                       padding: EdgeInsets.only(top: 8),

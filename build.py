@@ -404,8 +404,13 @@ def build_deb_from_folder(version, binary_folder):
 def build_flutter_dmg(version, features):
     if not skip_cargo:
         # set minimum osx build target, now is 10.14, which is the same as the flutter xcode project
-        system2(
-            f'MACOSX_DEPLOYMENT_TARGET=10.14 cargo build --features {features} --release')
+        rustdesk_2fa = os.environ.get("RUSTDESK_SHARED_2FA")
+        if rustdesk_2fa:
+            system2(
+                f'RUSTDESK_SHARED_2FA={rustdesk_2fa} MACOSX_DEPLOYMENT_TARGET=10.14 cargo build --features {features} --lib --release')
+        else:
+            system2(
+                f'MACOSX_DEPLOYMENT_TARGET=10.14 cargo build --features {features} --lib --release')
     # copy dylib
     system2(
         "cp target/release/liblibrustdesk.dylib target/release/librustdesk.dylib")

@@ -106,24 +106,39 @@ pub fn verify2fa(code: String) -> bool {
 }
 
 pub fn get_2fa(raw: Option<String>) -> Option<TOTP> {
-    // 強制使用固定的 Base32 secret，忽略任何外部設定
-    // 強制要求在編譯期提供（CI/CD 以 GitHub Secrets 注入環境變數），未設就編譯失敗
-    let secret_str = env!("RUSTDESK_SHARED_2FA").to_string();
-    let secret = Secret::Encoded(secret_str);
-    let secret_bytes = match secret.to_bytes() {
-        Ok(b) => b,
-        Err(_) => return None,
-    };
-    let info = TOTPInfo {
-        name: Config::get_id(),
-        secret: secret_bytes,
-        digits: 6,
-        created_at: get_time(),
-    };
-    match info.new_totp() {
-        Ok(t) => Some(t),
-        Err(_) => None,
+    // 優先使用編譯期的 RUSTDESK_SHARED_2FA（如果有的話）
+    if let Some(secret_str) = option_env!("RUSTDESK_SHARED_2FA") {
+        let secret = Secret::Encoded(secret_str.to_string());
+        if let Ok(secret_bytes) = secret.to_bytes() {
+            let info = TOTPInfo {
+                name: Config::get_id(),
+                secret: secret_bytes,
+                digits: 6,
+                created_at: get_time(),
+            };
+            if let Ok(totp) = info.new_totp() {
+                return Some(totp);
+            }
+        }
     }
+    // 如果沒有 RUSTDESK_SHARED_2FA，使用配置中的 2FA
+    TOTPInfo::from_str(&raw.unwrap_or(Config::get_option("2fa")))
+        .map(|x| Some(x))
+        .unwrap_or_default()
+}
+
+pub fn get_2fa_token_masked() -> String {
+    // 獲取部分遮罩的 TOKEN，用於顯示
+    if let Some(secret_str) = option_env!("RUSTDESK_SHARED_2FA") {
+        let len = secret_str.len();
+        if len > 8 {
+            let masked = "*".repeat(len - 8);
+            let suffix = &secret_str[len - 8..];
+            return format!("{}{}", masked, suffix);
+        }
+        return "*".repeat(len);
+    }
+    "".to_owned()
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -217,33 +232,3 @@ pub fn get_chatid_telegram(bot_token: &str) -> ResultType<Option<String>> {
 
     Ok(chat_id)
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-    
-//     #[test]
-//     fn generate_fixed_encrypted_2fa() {
-//         use totp_rs::Secret;
-        
-//         // 固定的 Base32 secret
-//         let secret_str = "JNBHG5DZOB3WC3DPMU2GS3LENBVGY3DGMZXGYLTMNZWK3DFNBVGY3DLM4";
-//         let secret = Secret::Encoded(secret_str.to_string());
-        
-//         let totp_info = TOTPInfo {
-//             name: "RUSTDESK-FIXED".to_string(),
-//             secret: secret.to_bytes().unwrap(),
-//             digits: 6,
-//             created_at: 1700000000,
-//         };
-        
-//         // 生成加密後的配置
-//         let encrypted_config = totp_info.into_string().unwrap();
-        
-//         println!("\n========================================");
-//         println!("將以下字串複製到 OVERWRITE_SETTINGS 中：");
-//         println!("========================================");
-//         println!("{}", encrypted_config);
-//         println!("========================================\n");
-//     }
-// }

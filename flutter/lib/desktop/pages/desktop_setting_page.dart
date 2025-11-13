@@ -820,7 +820,7 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
   Widget tfa() {
     bool enabled = !locked;
     // 🔒 強制鎖定 2FA 和相關選項
-    bool tfa2faLocked = true;  // 強制鎖定 2FA，不能關閉
+    bool tfa2faLocked = false;  // 強制鎖定 2FA，不能關閉
     bool tfaBotLocked = true;  // 強制鎖定 Telegram bot，不能設定
     bool tfaTrustLocked = true; // 強制鎖定信任裝置，不能更改
 
@@ -865,6 +865,35 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
           onChanged(!has2fa.value);
         },
       ).marginOnly(left: _kCheckBoxLeftMargin);
+      
+      // 顯示 TOKEN（如果有設定 RUSTDESK_KEY）
+      String tokenMasked = '';
+      try {
+        tokenMasked = bind.mainGet2FaTokenMaskedSync();
+      } catch (e) {
+        // 如果函數不存在或出錯，忽略
+      }
+
+      // 如果有 TOKEN，在 2FA checkbox 下方顯示
+      if (tokenMasked.isNotEmpty) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            tfa,
+            Padding(
+              padding: EdgeInsets.only(left: _kCheckBoxLeftMargin + 25, top: 8),
+              child: Text(
+                'TOKEN: $tokenMasked',
+                style: TextStyle(
+                  color: disabledTextColor(context, true),
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        );
+      }
+      
       if (!has2fa.value) {
         return tfa;
       }
