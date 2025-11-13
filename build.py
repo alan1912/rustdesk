@@ -409,6 +409,10 @@ def build_flutter_dmg(version, features):
     # copy dylib
     system2(
         "cp target/release/liblibrustdesk.dylib target/release/librustdesk.dylib")
+    # 為了讓 Xcode Release 建置能找到 dylib，複製到 debug 路徑
+    # 因為 Xcode 配置指向 debug 路徑
+    system2(
+        "mkdir -p target/debug && cp target/release/liblibrustdesk.dylib target/debug/liblibrustdesk.dylib")
     os.chdir('flutter')
     system2('flutter build macos --release')
     system2('cp -rf ../target/release/service ./build/macos/Build/Products/Release/RustDesk.app/Contents/MacOS/')
