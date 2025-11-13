@@ -65,7 +65,15 @@ cargo clean
 * 安裝 Rust
 * 安裝 vcpkg
 * 安裝 Xcode Command Line Tools
-* 安裝 flutter
+* 安裝 flutter 3.24.5
+```
+# 可以使用 fvm 安裝
+brew install fvm
+fvm install 3.24.5
+fvm global 3.24.5
+export PATH="$HOME/fvm/default/bin:$PATH"
+flutter --version
+```
 * 安裝 flutter_rust_bridge_codegen
 
 ***前置安裝完畢後，執行以下指令編譯***
